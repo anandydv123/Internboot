@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Portfolio": {
+      "title": "Portfolio",
+      "description": "User profile, configuration and skills for their portfolio website.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "bio": { "type": "string", "maxLength": 1000 },
+        "profilePhoto": { "type": "string", "maxLength": 150000 },
+        "email": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "location": { "type": "string", "maxLength": 100 },
+        "socialGithub": { "type": "string", "maxLength": 200 },
+        "socialLinkedin": { "type": "string", "maxLength": 200 },
+        "socialTwitter": { "type": "string", "maxLength": 200 },
+        "templateId": { "type": "string", "enum": ["modern", "creative", "professional"] },
+        "sectionsOrder": { "type": "array" },
+        "seoTitle": { "type": "string", "maxLength": 100 },
+        "seoDescription": { "type": "string", "maxLength": 250 },
+        "skills": { "type": "array" },
+        "isPublished": { "type": "boolean" },
+        "updatedAt": { "type": "object" }
+      },
+      "required": ["userId", "name", "bio", "email", "templateId", "sectionsOrder", "skills", "isPublished", "updatedAt"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "An individual portfolio project completed by the user.",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "imageUrl": { "type": "string", "maxLength": 150000 },
+        "category": { "type": "string", "maxLength": 50 },
+        "tags": { "type": "array" },
+        "demoUrl": { "type": "string", "maxLength": 200 },
+        "githubUrl": { "type": "string", "maxLength": 200 },
+        "order": { "type": "number" },
+        "createdAt": { "type": "object" },
+        "updatedAt": { "type": "object" }
+      },
+      "required": ["projectId", "userId", "title", "description", "category", "tags", "order", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/portfolios/{userId}": {
+      "schema": "Portfolio",
+      "description": "The main portfolio and profile document for a user."
+    },
+    "/portfolios/{userId}/projects/{projectId}": {
+      "schema": "Project",
+      "description": "The projects belonging to the user's portfolio."
+    }
+  }
+}

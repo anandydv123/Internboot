@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helper for Portfolio
+    function isValidPortfolio(data) {
+      return data.userId is string && data.userId.size() <= 128
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 100
+        && data.bio is string && data.bio.size() <= 1000
+        && (!data.keys().hasAny(['profilePhoto']) || (data.profilePhoto is string && data.profilePhoto.size() <= 150000))
+        && data.email is string && data.email.size() <= 100
+        && (!data.keys().hasAny(['phone']) || (data.phone is string && data.phone.size() <= 30))
+        && (!data.keys().hasAny(['location']) || (data.location is string && data.location.size() <= 100))
+        && (!data.keys().hasAny(['socialGithub']) || (data.socialGithub is string && data.socialGithub.size() <= 200))
+        && (!data.keys().hasAny(['socialLinkedin']) || (data.socialLinkedin is string && data.socialLinkedin.size() <= 200))
+        && (!data.keys().hasAny(['socialTwitter']) || (data.socialTwitter is string && data.socialTwitter.size() <= 200))
+        && data.templateId is string && (data.templateId == 'modern' || data.templateId == 'creative' || data.templateId == 'professional')
+        && data.sectionsOrder is list && data.sectionsOrder.size() <= 10
+        && (!data.keys().hasAny(['seoTitle']) || (data.seoTitle is string && data.seoTitle.size() <= 100))
+        && (!data.keys().hasAny(['seoDescription']) || (data.seoDescription is string && data.seoDescription.size() <= 250))
+        && data.skills is list && data.skills.size() <= 20
+        && data.isPublished is bool;
+    }
+
+    // Validation helper for Project
+    function isValidProject(data) {
+      return data.projectId is string && data.projectId.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 100
+        && data.description is string && data.description.size() <= 2000
+        && (!data.keys().hasAny(['imageUrl']) || (data.imageUrl is string && data.imageUrl.size() <= 150000))
+        && data.category is string && data.category.size() <= 50
+        && data.tags is list && data.tags.size() <= 10
+        && (!data.keys().hasAny(['demoUrl']) || (data.demoUrl is string && data.demoUrl.size() <= 200))
+        && (!data.keys().hasAny(['githubUrl']) || (data.githubUrl is string && data.githubUrl.size() <= 200))
+        && data.order is number;
+    }
+
+    // Portfolios collection
+    match /portfolios/{userId} {
+      // Get: public can view if published, otherwise must be owner
+      allow get: if (resource != null && resource.data.isPublished == true) || isOwner(userId);
+      
+      // List: allow reading portfolios if they are published, or if owner queries their own
+      allow list: if (resource != null && resource.data.isPublished == true) || isOwner(userId);
+
+      // Create: must be owner, valid ID, correct fields, strict schema, current timestamp
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidPortfolio(incoming())
+        && incoming().userId == userId
+        && incoming().updatedAt == request.time;
+
+      // Update: must be owner, valid schema, immutable fields preserved, current timestamp
+      allow update: if isOwner(userId)
+        && isValidPortfolio(incoming())
+        && incoming().userId == existing().userId
+        && incoming().updatedAt == request.time;
+
+      // Delete: must be owner
+      allow delete: if isOwner(userId);
+
+      // Subcollection for projects
+      match /projects/{projectId} {
+        // Get: public can view if portfolio is published, or if caller is owner
+        allow get: if get(/databases/$(database)/documents/portfolios/$(userId)).data.isPublished == true || isOwner(userId);
+
+        // List: public can list if portfolio is published, or if caller is owner
+        allow list: if get(/databases/$(database)/documents/portfolios/$(userId)).data.isPublished == true || isOwner(userId);
+
+        // Create: must be owner, valid ID, valid project fields, current time
+        allow create: if isOwner(userId)
+          && isValidId(projectId)
+          && isValidProject(incoming())
+          && incoming().projectId == projectId
+          && incoming().userId == userId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        // Update: must be owner, valid project fields, immutable fields, current time
+        allow update: if isOwner(userId)
+          && isValidProject(incoming())
+          && incoming().projectId == existing().projectId
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time;
+
+        // Delete: must be owner
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
