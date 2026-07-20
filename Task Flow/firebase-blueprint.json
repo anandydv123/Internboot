@@ -1,0 +1,38 @@
+{
+  "$schema": "https://aistudio.google.com/firebase-blueprint-schema.json",
+  "collections": {
+    "users": {
+      "description": "User profiles",
+      "fields": {
+        "displayName": { "type": "string", "description": "User's full name" },
+        "email": { "type": "string", "description": "User's email address" }
+      },
+      "rules": {
+        "read": "request.auth.uid == id",
+        "create": "request.auth.uid == id",
+        "update": "request.auth.uid == id",
+        "delete": "false"
+      }
+    },
+    "tasks": {
+      "description": "Tasks for the to-do app",
+      "fields": {
+        "userId": { "type": "string", "description": "The user who owns this task" },
+        "title": { "type": "string", "description": "Task title" },
+        "description": { "type": "string", "description": "Task description, optional" },
+        "completed": { "type": "boolean", "description": "Whether the task is completed" },
+        "category": { "type": "string", "description": "Task category (e.g. Work, Personal)" },
+        "priority": { "type": "string", "description": "low, medium, high" },
+        "deadline": { "type": "timestamp", "description": "Optional deadline for the task" },
+        "createdAt": { "type": "timestamp", "description": "Creation timestamp" },
+        "updatedAt": { "type": "timestamp", "description": "Last updated timestamp" }
+      },
+      "rules": {
+        "read": "request.auth.uid == resource.data.userId",
+        "create": "request.auth.uid == request.resource.data.userId",
+        "update": "request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId",
+        "delete": "request.auth.uid == resource.data.userId"
+      }
+    }
+  }
+}
