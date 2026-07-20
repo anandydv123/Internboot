@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
