@@ -1,0 +1,6 @@
+{
+  "name": "Online Examination Portal",
+  "description": "A comprehensive web-based Online Examination Portal where administrators can manage exams and questions, and students can register, log in, and attempt timed exams with automated grading and detailed performance analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
